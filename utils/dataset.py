@@ -9,8 +9,6 @@ import torch
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
 import cv2
-from torchvision.io import read_image
-import pandas as pd
 
 class BackgroundGenerator(threading.Thread):
     def __init__(self, generator, local_rank, max_prefetch=6):
@@ -107,7 +105,6 @@ class MXFaceDataset(Dataset):
 
     def __len__(self):
         return len(self.imgidx)
-
 class FaceDatasetFolder(Dataset):
     def __init__(self, root_dir, local_rank):
         super(FaceDatasetFolder, self).__init__()
@@ -139,7 +136,6 @@ class FaceDatasetFolder(Dataset):
     def __getitem__(self, index):
         path = self.imgidx[index]
         img=self.readImage(path)
-        img = cv2.resize(img, (110, 110))
         label = self.labels[index]
         label = torch.tensor(label, dtype=torch.long)
         sample = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)

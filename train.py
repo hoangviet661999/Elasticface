@@ -1,4 +1,5 @@
 import argparse
+from calendar import c
 import logging
 import os
 import time
@@ -12,10 +13,10 @@ from torch.nn.utils import clip_grad_norm_
 from torch.nn import CrossEntropyLoss
 
 from utils import losses
-from config.config import config as cfg
-from utils.dataset import DataLoaderX, FaceDatasetFolder
+from utils.dataset import MXFaceDataset, DataLoaderX
 from utils.utils_callbacks import CallBackVerification, CallBackLogging, CallBackModelCheckpoint
 from utils.utils_logging import AverageMeter, init_logging
+from utils.utils_config import get_config
 
 from backbones.iresnet import iresnet100, iresnet50
 
@@ -29,17 +30,17 @@ def main(args):
     rank = dist.get_rank()
     world_size = dist.get_world_size()
 
+    cfg = get_config(args.config)
+
     if not os.path.exists(cfg.output) and rank == 0:
         os.makedirs(cfg.output)
     else:
         time.sleep(2)
 
-    cfg.dataset = args.dataset
-
     log_root = logging.getLogger()
     init_logging(log_root, rank, cfg.output)
 
-    trainset = FaceDatasetFolder(root_dir=cfg.rec, local_rank=local_rank)
+    trainset = MXFaceDataset(root_dir=cfg.rec, local_rank=local_rank)
 
     train_sampler = torch.utils.data.distributed.DistributedSampler(
         trainset, shuffle=True)
@@ -47,15 +48,6 @@ def main(args):
     train_loader = DataLoaderX(
         local_rank=local_rank, dataset=trainset, batch_size=cfg.batch_size,
         sampler=train_sampler, num_workers=0, pin_memory=True, drop_last=True)
-
-    valset = FaceDatasetFolder(root_dir=cfg.val_rec, local_rank=local_rank)
-
-    val_sampler = torch.utils.data.distributed.DistributedSampler(
-        trainset, shuffle=True)
-
-    val_loader = DataLoaderX(
-        local_rank=local_rank, dataset=valset, batch_size=cfg.batch_size,
-        sampler=val_sampler, num_workers=0, pin_memory=True, drop_last=True)
 
     # load model
     if cfg.network == "iresnet100":
@@ -153,17 +145,19 @@ def main(args):
         print("last learning rate: {}".format(scheduler_header.get_lr()))
         # ------------------------------------------------------------
 
+    callback_verification = CallBackVerification(cfg.eval_step, rank, cfg.val_targets, cfg.rec)
+    callback_logging = CallBackLogging(50, rank, total_step, cfg.batch_size, world_size, writer=None)
     callback_checkpoint = CallBackModelCheckpoint(rank, cfg.output)
+
+    loss = AverageMeter()
     global_step = cfg.global_step
-    
     for epoch in range(start_epoch, cfg.num_epoch):
-        loss = AverageMeter()
         train_sampler.set_epoch(epoch)
-        for i, (img, label) in enumerate(train_loader):
+        for _, (img, label) in enumerate(train_loader):
             global_step += 1
             img = img.cuda(local_rank, non_blocking=True)
             label = label.cuda(local_rank, non_blocking=True)
-            
+
             features = F.normalize(backbone(img))
 
             thetas = header(features, label)
@@ -179,24 +173,9 @@ def main(args):
             opt_header.zero_grad()
 
             loss.update(loss_v.item(), 1)
-
-            if i == int(cfg.num_image/cfg.batch_size)-1:
-                m=0
-                for _, (img, label) in enumerate(val_loader):
-                    img = img.cuda(local_rank, non_blocking=True)
-                    label = label.cuda(local_rank, non_blocking=True)
             
-                    features = F.normalize(backbone(img))
-
-                    thetas = header(features, label)
-
-                    _, arg = thetas.max(dim=0)
-
-                    for j in range(len(arg)):
-                        if arg[j] == label[j]:
-                            m+=1
-                
-                print("Epoch {}:, Loss: {}, Acc: {}".format(epoch+1, loss.avg, m/cfg.num_image))
+            callback_logging(global_step, loss, epoch)
+            callback_verification(global_step, backbone)
 
         scheduler_backbone.step()
         scheduler_header.step()
@@ -210,6 +189,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='PyTorch margin penalty loss  training')
     parser.add_argument('--local_rank', type=int, default=0, help='local_rank')
     parser.add_argument('--resume', type=int, default=0, help="resume training")
-    parser.add_argument('--dataset', type=str, default=0, help="name dataset")
+    parser.add_argument('--config', type=str, help="py config file")
     args_ = parser.parse_args()
     main(args_)
