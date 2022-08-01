@@ -1,7 +1,7 @@
 from easydict import EasyDict as edict
 
 config = edict()
-config.dataset = "LFW" # training dataset
+config.dataset = "" # training dataset
 config.embedding_size = 512 # embedding size of model
 config.momentum = 0.9
 config.weight_decay = 5e-4

@@ -34,6 +34,8 @@ def main(args):
     else:
         time.sleep(2)
 
+    cfg.dataset = args.dataset
+
     log_root = logging.getLogger()
     init_logging(log_root, rank, cfg.output)
 
@@ -208,5 +210,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='PyTorch margin penalty loss  training')
     parser.add_argument('--local_rank', type=int, default=0, help='local_rank')
     parser.add_argument('--resume', type=int, default=0, help="resume training")
+    parser.add_argument('--dataset', type=str, default=0, help="name dataset")
     args_ = parser.parse_args()
     main(args_)
