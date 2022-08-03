@@ -17,6 +17,7 @@ from utils.dataset import MXFaceDataset, DataLoaderX
 from utils.utils_callbacks import CallBackVerification, CallBackLogging, CallBackModelCheckpoint
 from utils.utils_logging import AverageMeter, init_logging
 from utils.utils_config import get_config
+from torch.utils.tensorboard import SummaryWriter
 
 from backbones.iresnet import iresnet100, iresnet50
 
@@ -31,6 +32,7 @@ def main(args):
     world_size = dist.get_world_size()
 
     cfg = get_config(args.config)
+    writer = SummaryWriter('runs')
 
     if not os.path.exists(cfg.output) and rank == 0:
         os.makedirs(cfg.output)
@@ -153,7 +155,7 @@ def main(args):
     global_step = cfg.global_step
     for epoch in range(start_epoch, cfg.num_epoch):
         train_sampler.set_epoch(epoch)
-        for _, (img, label) in enumerate(train_loader):
+        for i, (img, label) in enumerate(train_loader):
             global_step += 1
             img = img.cuda(local_rank, non_blocking=True)
             label = label.cuda(local_rank, non_blocking=True)
@@ -176,6 +178,9 @@ def main(args):
             
             callback_logging(global_step, loss, epoch)
             callback_verification(global_step, backbone)
+            
+            if i%1000 == 999: #vẽ tensorboard mỗi 1000 mini-baches
+                writer.add_scalar('trainning_loss', loss, global_step)
 
         scheduler_backbone.step()
         scheduler_header.step()
