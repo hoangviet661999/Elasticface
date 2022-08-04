@@ -63,7 +63,7 @@ def main(args):
 
     if args.resume:
         try:
-            backbone_pth = os.path.join(cfg.output, str(cfg.global_step) + "backbone.pth")
+            backbone_pth = os.path.join(cfg.output, str(args.epoches) + "backbone.pth")
             backbone.load_state_dict(torch.load(backbone_pth, map_location=torch.device(local_rank)))
 
             if rank == 0:
@@ -98,7 +98,7 @@ def main(args):
         print("Header not implemented")
     if args.resume:
         try:
-            header_pth = os.path.join(cfg.output, str(cfg.global_step) + "header.pth")
+            header_pth = os.path.join(cfg.output, str(args.epoches) + "header.pth")
             header.load_state_dict(torch.load(header_pth, map_location=torch.device(local_rank)))
 
             if rank == 0:
@@ -131,8 +131,10 @@ def main(args):
     if rank == 0: logging.info("Total Step is: %d" % total_step)
 
     if args.resume:
-        rem_steps = (total_step - cfg.global_step)
-        cur_epoch = cfg.num_epoch - int(cfg.num_epoch / total_step * rem_steps)
+        # rem_steps = (total_step - cfg.global_step)
+        # cur_epoch = cfg.num_epoch - int(cfg.num_epoch / total_step * rem_steps)
+        rem_steps = total_step - int(len(trainset) / cfg.batch_size / world_size * args.epoches)
+        cur_epoch = cfg.num_epoch - args.epoches
         logging.info("resume from estimated epoch {}".format(cur_epoch))
         logging.info("remaining steps {}".format(rem_steps))
         
@@ -192,6 +194,7 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='PyTorch margin penalty loss  training')
+    parser.add_argument('--epoches', type=int, default=0, help='resume epoch training')
     parser.add_argument('--local_rank', type=int, default=0, help='local_rank')
     parser.add_argument('--resume', action='store_true', help="resume training")
     parser.add_argument('--config', type=str, help="py config file")
