@@ -97,8 +97,10 @@ class CallBackModelCheckpoint(object):
         self.rank: int = rank
         self.output: str = output
 
-    def __call__(self, global_step, backbone: torch.nn.Module, header: torch.nn.Module = None):
+    def __call__(self, epoch, num_image, batch_size, global_step, backbone: torch.nn.Module, header: torch.nn.Module = None):
+
+        m = global_step - (epoch+1)*int(num_image/batch_size)    
         if global_step > 100 and self.rank == 0:
-            torch.save(backbone.module.state_dict(), os.path.join(self.output, str(global_step)+ "backbone.pth"))
+            torch.save(backbone.module.state_dict(), os.path.join(self.output, str(epoch), str("-"), str(m)+ "backbone.pth"))
         if global_step > 100 and header is not None:
-            torch.save(header.module.state_dict(), os.path.join(self.output, str(global_step)+ "header.pth"))
+            torch.save(header.module.state_dict(), os.path.join(self.output, str(epoch), str("-"), str(m)+ "header.pth"))

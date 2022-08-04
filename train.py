@@ -185,7 +185,7 @@ def main(args):
         scheduler_backbone.step()
         scheduler_header.step()
 
-        callback_checkpoint(global_step, backbone, header)
+        callback_checkpoint(epoch, cfg.num_image, cfg.batch_size, global_step, backbone, header)
 
     dist.destroy_process_group()
 
