@@ -182,7 +182,7 @@ def main(args):
             callback_verification(global_step, backbone)
             
             if i%1000 == 999: #vẽ tensorboard mỗi 1000 mini-baches
-                writer.add_scalar('trainning_loss', loss, global_step)
+                writer.add_scalar('trainning_loss', loss.avg, global_step)
 
         scheduler_backbone.step()
         scheduler_header.step()
