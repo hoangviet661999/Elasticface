@@ -133,10 +133,9 @@ def main(args):
     if args.resume:
         # rem_steps = (total_step - cfg.global_step)
         # cur_epoch = cfg.num_epoch - int(cfg.num_epoch / total_step * rem_steps)
-        rem_steps = total_step - int(len(trainset) / cfg.batch_size / world_size * args.epoches)
-        cur_epoch = cfg.num_epoch - args.epoches
+        cur_epoch = args.epoches
         logging.info("resume from estimated epoch {}".format(cur_epoch))
-        logging.info("remaining steps {}".format(rem_steps))
+        # logging.info("remaining steps {}".format(rem_steps))
         
         start_epoch = cur_epoch
         scheduler_backbone.last_epoch = cur_epoch
