@@ -193,7 +193,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='PyTorch margin penalty loss  training')
     parser.add_argument('--local_rank', type=int, default=0, help='local_rank')
-    parser.add_argument('--resume', type=int, default=0, help="resume training")
+    parser.add_argument('--resume', action='store_true', help="resume training")
     parser.add_argument('--config', type=str, help="py config file")
     args_ = parser.parse_args()
     main(args_)
