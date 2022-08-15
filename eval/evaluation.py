@@ -9,8 +9,7 @@ sys.path.append('/home/fboutros/ElasticFace')
 from utils.utils_callbacks import CallBackVerification
 from utils.utils_logging import init_logging
 
-from config.config import config as cfg
-
+from config.base import config as cfg
 from backbones.iresnet import iresnet100, iresnet50
 
 if __name__ == "__main__":
@@ -22,6 +21,7 @@ if __name__ == "__main__":
     weights=os.listdir(output_folder)
     for w in weights:
         if "backbone" in w:
+            print(int(w.split("backbone")[0]))
             if cfg.network == "iresnet100":
                 backbone = iresnet100(num_features=cfg.embedding_size).to(f"cuda:{gpu_id}")
             elif cfg.network == "iresnet50":
