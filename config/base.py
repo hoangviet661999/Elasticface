@@ -41,7 +41,7 @@ elif (config.loss=="ElasticCosFace"):
 config.network = "iresnet100"
 config.SE=False # SEModule
 
-config.rec = "/data/psiebke/faces_emore"
+config.rec = "../datasets/ms1m-retinaface-t1/"
 config.num_classes = 85742
 config.num_image = 5822653
 config.num_epoch =  26
