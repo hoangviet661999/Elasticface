@@ -6,7 +6,7 @@ import cv2
 minsize = 20
 threshold = [0.6, 0.7, 0.7]
 factor = 0.709
-input_image_size = 160
+input_image_size = 320
 
 def detect_face(img):
     img = cv2.resize(img, (input_image_size, input_image_size))

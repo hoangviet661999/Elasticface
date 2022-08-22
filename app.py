@@ -1,5 +1,4 @@
 from __future__ import print_function
-from imutils.object_detection import non_max_suppression
 import numpy as np
 from PIL import Image
 import numpy as np
@@ -22,7 +21,7 @@ def predict():
     image = Image.open(io.BytesIO(image))
     image = np.array(image)
     detect_face(image) 
-    return render_template("index.html",)
+    return render_template("index.html")
 
 # extract the image from the request
 def extract_img(request):
