@@ -25,7 +25,7 @@ if __name__ == "__main__":
             if cfg.network == "iresnet100":
                 backbone = iresnet100(num_features=cfg.embedding_size).to(f"cuda:{gpu_id}")
             elif cfg.network == "iresnet50":
-                backbone = iresnet50(num_classes=cfg.embedding_size).to(f"cuda:{gpu_id}")
+                backbone = iresnet50(num_features=cfg.embedding_size).to(f"cuda:{gpu_id}")
             else:
                 backbone = None
                 exit()
